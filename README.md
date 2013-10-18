@@ -3,6 +3,8 @@ PatchTorrent
 «апросы к тракерам заворачиваютс€ на —квид, который на лету пропускает отдаваемые клиентам торренты через патчер
 “ак как это решение не используетс€ уже 2+ года, то это неработающий код =(
 
+¬от ветка: http://forum.nag.ru/forum/index.php?showtopic=47615&view=findpost&p=449831
+
 Linux:
  iptables -t nat -N TRACKERS 
  # ловим пакеты, идущие на трекеры iptables -t mangle -A PREROUTING -m string --string "Content-Type: application/x-bittorrent" --algo kmp --to 1500 -j LOG 
@@ -49,6 +51,17 @@ crontable
 
 прокси-сервер middleman:  mman.xml. 
 #ipfw add fwd 127.0.0.1,3128 tcp from 10.54.0.0/16 to table(15) dst-port 80 in via vlan3050
+
+конфига monit, след€щего за доступностью прокси-сервера (по хорошему, нуждаетс€ в доработке условий и action'a):
+CODE
+check process middleman with pidfile /var/run/mman.pid
+    start program = "/usr/local/etc/rc.d/mman.sh start"
+    stop program  = "/usr/local/etc/rc.d/mman.sh stop"
+    if cpu > 60% for 2 cycles then alert
+    if totalmem > 200.0 MB for 5 cycles then alert
+    if loadavg(5min) greater than 3 for 8 cycles then alert
+    if failed host 10.78.77.35 port 3128 with timeout 5 seconds then restart
+    if 3 restarts within 5 cycles then timeout
 
 
 Squid:
